@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html ng-app>
+    <head>
+    	<!-- info pane? legends connected to map, filters-->
+    <!--WATCH THE TUTORIALS ON CARTODB ACADEMY-->
+    <!--http://academy.cartodb.com/courses/03-cartodbjs-ground-up/lesson-3.html-->
+        <title>
+            Westside Investment Map
+        </title>
+
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <link rel="shortcut icon" href="http://cartodb.com/assets/favicon.ico" />
+        <!--link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/themes/css/cartodb.css" type="text/css" /-->
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+        <link rel="stylesheet" href="bootstrap.css" />
+        <link rel="stylesheet" href="semantic.min.css" />
+        <link rel="stylesheet" href="http://academy.cartodb.com/css/cdbui.css" type="text/css" />
+        <link rel="stylesheet" href="cartoDBstyle.css" type="text/css" />
+          <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+        <link rel="stylesheet" href="style.css" type="text/css" />
+
+
+      
+        <script src="http://libs.cartocdn.com/cartodb.js/v3/cartodb.js" type="text/javascript"></script>
+
+ 
+        <style type="text/css">
+            
+            </style>
+           
+            <style type="cartocss/html" id="labels">
+	            /*label the dots with organization name*/
+				#blank_westside_fund_recipients::labels {
+				  text-name: [project]; /*changed*/
+				  text-face-name: 'DejaVu Sans Book';
+				  text-size: 10;
+				  text-label-position-tolerance: 10;
+				  text-fill: #000;
+				  text-halo-fill: #FFF;
+				  text-halo-radius: 1;
+				  text-dy: -10;
+				  text-allow-overlap: true;
+				  text-placement: point;
+				  text-placement-type: simple;
+				}
+            </style>
+
+            <style type="cartocss/html" id="bubble">
+
+				/** bubble visualization */
+
+			#blank_westside_fund_recipients{
+			  marker-fill-opacity: 0.9;
+			  marker-line-color: #FFF;
+			  marker-line-width: 1.5;
+			  marker-line-opacity: 1;
+			  marker-placement: point;
+			  marker-multi-policy: largest;
+			  marker-type: ellipse;
+			  marker-fill: #000000;
+			  marker-allow-overlap: true;
+			  marker-clip: false;
+			}
+
+			#blank_westside_fund_recipients [ amount <= 497772] {
+			   marker-width: 25.0;
+			}
+			#blank_westside_fund_recipients [ amount <= 405000] {
+			   marker-width: 23.3;
+			}
+			#blank_westside_fund_recipients [ amount <= 355720] {
+			   marker-width: 21.7;
+			}
+			#blank_westside_fund_recipients [ amount <= 190220] {
+			   marker-width: 20.0;
+			}
+			#blank_westside_fund_recipients [ amount <= 115000] {
+			   marker-width: 18.3;
+			}
+			#blank_westside_fund_recipients [ amount <= 62535] {
+			   marker-width: 16.7;
+			}
+			#blank_westside_fund_recipients [ amount <= 55000] {
+			   marker-width: 15.0;
+			}
+			#blank_westside_fund_recipients [ amount <= 28000] {
+			   marker-width: 13.3;
+			}
+			#blank_westside_fund_recipients [ amount <= 25000] {
+			   marker-width: 11.7;
+			}
+			#blank_westside_fund_recipients [ amount <= 20000] {
+			   marker-width: 10.0;
+			}
+            </style>
+            
+            <style type="cartocss/html" id="simple">
+			/*no color code, no size*/
+			#blank_westside_fund_recipients{
+			  marker-fill-opacity: 0.9;
+			  marker-line-color: #FFF;
+			  marker-line-width: 1.5;
+			  marker-line-opacity: 1;
+			  marker-placement: point;
+			  marker-type: ellipse;
+			  marker-width: 20;
+			  marker-fill: #000000;
+			  marker-allow-overlap: true;
+			}
+
+			</style>
+
+            <style type="cartocss/html" id="category">
+            	/** category visualization */
+			#blank_westside_fund_recipients {
+			   marker-fill-opacity: 0.9;
+			   marker-line-color: #FFF;
+			   marker-line-width: 1.5;
+			   marker-line-opacity: 1;
+			   marker-placement: point;
+			   marker-type: ellipse;
+			   marker-width: 20;
+			   marker-allow-overlap: true;
+			}
+
+			#blank_westside_fund_recipients[status="In Progress"] { /*maybe TODO. not yet, but: change based on fundingEnds wrt today's date using jquery.filter.css if cicily will not be editing the google spreadsheet*/
+			   marker-fill: gold;
+			}
+
+			#blank_westside_fund_recipients[status="Completed"] {
+			   marker-fill: #229A00; /*edit this color*/
+			}
+
+			#blank_westside_fund_recipients[status="Discontinued"] {
+			   marker-fill: #cccccc; /*edit this color*/
+			}
+
+            </style>
+
+    </head>
+    <body  onClick="PassContent()">
+    	<!--legend for color code-->
+		
+        <style>
+			.nav-tabs{
+			  height: 600px;
+			  width: 200px;
+			  position: absolute;
+			  z-index: 9999;
+			  top: 3%;
+			  left: 80%;}
+			 
+			 .tab-content{
+			  height: 600px;
+			  width: 200px;
+			  position: absolute;
+			  z-index: 9999;
+			  top: 10%;
+			  left: 80%;
+				 }
+        </style>
+
+        
+        <script>
+          $(function () {
+            $('#myTab a:last').tab('show')
+          })
+        </script>
+        
+        
+        <div id="map"></div>
+      
+    	<div id="menu_content" class="collapse in">
+    
+    		<button id="filters-toggle" class="sidebar-show" data-toggle="collapse" data-target="#menu">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button> 
+        
+        <div id="menu" class="layer_selector col-lg-4 pull-left collapse in">
+            <p><strong>Sectors</strong></p>
+            <form id="sectors">
+            	<input type="checkbox" id="education" checked><label for="checkbox"> Education</label><br>
+  				<input type="checkbox" id="transportation" checked><label for="checkbox"> Transportation</label><br>
+  				<input type="checkbox" id="environment" checked><label for="checkbox"> Environment</label><br>
+  				<input type="checkbox" id="health" checked><label for="checkbox"> Healthy Living</label><br>
+  				<input type="checkbox" id="housing" checked><label for="checkbox"> Housing</label><br>
+          <input type="checkbox" id="redevelopment" checked><label for="checkbox"> Redevelopment</label><br> <!--changed-->
+  				<input type="checkbox" id="jobs" checked><label for="checkbox"> Job Training</label><br>
+          <input type="checkbox" id="leadership" checked><label for="checkbox"> Leadership Training</label><br> <!-- changed-->
+  				<input type="checkbox" id="youthSector" checked><label for="checkbox"> Youth Programming</label><br>
+  				<input type="checkbox" id="crime" checked><label for="checkbox"> Crime and Safety</label>
+  			</form>
+  			<p><strong>Participants</strong></p>
+  			<form id="beneficiaries">
+  				<input type="checkbox" id="teens" checked><label for="checkbox"> Youth 12-17 Years</label><br>
+  				<input type="checkbox" id="seniors" checked><label for="checkbox"> Senior Citizens</label><br>
+  				<input type="checkbox" id="under12" checked><label for="checkbox"> Youth Under 12</label><br>
+  				<input type="checkbox" id="adults" checked><label for="checkbox"> Adults</label><br>
+          <input type="checkbox" id="community" checked><label for="checkbox"> Community at Large</label><br> 
+  			</form>
+            <p><strong>Toggle Labels</strong></p>
+            	<input type="radio" id="labelOn" name="labels" checked><label for="radio">On</label><br>
+            	<input type="radio" id="labelOff" name="labels" unchecked><label for="radio">Off</label><br>
+            <p><strong>Toggle Color Code</strong></p>
+            	<input type="radio" id="colorOn" name="colorcode" checked><label for="radio">On</label><br>
+            	<input type="radio" id="colorOff" name="colorcode" unchecked><label for="radio">Off</label><br>
+            <p><strong>Toggle Bubble Size</strong></p>
+            	<input type="radio" id="bubbleOn" name="bubblesize" unchecked><label for="radio">On</label><br>
+            	<input type="radio" id="bubbleOff" name="bubblesize" checked><label for="radio">Off</label><br>
+        </div><!--menu_content-->
+        </div><!--menu-->
+        </div><!--col-lg-4-->
+        
+        
+        
+      
+        <div id="right-pane" class="col-lg-6 pull-right collapse in">
+          <button id="map-filters-toggle" class="sidebar-show" data-toggle="collapse" data-target="#infoPane">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button> 
+         
+        
+ 		<div id="infoPane" class="cartodb-popup-customize" >
+			  <div class="ui raised segment collapse in" id="InfoPane-toggle">
+                    <div class="cartodb-popup-content passcontent">
+                        <div class="ui column">
+                        <div id="SectorRibbon" class="ui inverted green button centered column" style="padding:.5em 1em 1em 1em;">
+                            <i class="icon" id="SectorIcon"></i> 
+                             <p class="colllapse in" id="orgname"></p>
+                            <p id="SectorLabelText">{{sector}}</p>
+                            
+                        </div>
+                        <hr>
+  						  
+                          <h4 data-toggle="collapse" data-target="#projectName-pass" style="font-size:20px;"><strong>Project Name</strong></h4>
+                          <p id="projectName-pass"></p>
+
+                          <h4 data-toggle="collapse" data-target="#amountreceived" style="font-size:20px;"><strong>Amount Received</strong></h4>
+                          
+                          <p id="amountreceived"></p>
+                          
+                          <h4 data-toggle="collapse" data-target="#description-pass" style="font-size:20px;"><strong>Description</strong></h4>
+                          <p id="description-pass"></p>
+                          
+                          <h4 data-toggle="collapse" data-target="#participants" style="font-size:20px;"><strong>Participants</strong></h4>
+                          <p id="participants"></p>
+                          
+                          <h4 data-toggle="collapse" data-target="#funder" style="font-size:20px;"><strong>Funders</strong></h4>
+                          <p id="funder-pass"></p>
+                          
+                        </div><!--raised segment-->
+
+                    </div><!--passcontent-->
+                    
+                    <div id='colorCode' class='cartodb-legend custom' style="margin-top:5%;">	
+                   	 	<div class="legend-title">Color Key</div>
+                    <ul>
+                        <li>
+                            <div class="bullet" style="background:gold"></div>
+                            In Progress
+                        </li>
+                        <li>
+                            <div class="bullet" style="background:#229A00"></div>
+                            Funding period ended
+                        </li>
+                        <li>
+                            <div class="bullet" style="background:#cccccc"></div>
+                            Discontinued
+                        </li>
+                    </ul>
+                    </div><!--colorcode-->
+			  </div>
+			 <!--  <div class="cartodb-popup-tip-container"></div> --> <!--this adds a little tool tip carrot-->
+		 
+       
+        </div><!--infoPane-->
+        </div><!--right-pane--> 
+         
+         </div><!--row-->
+ 
+    
+        <!--Menu on the left-->
+        
+
+        </div>
+        
+         <div id= "toolTip"class="cartodb-tooltip-content-wrapper">
+          <div class="cartodb-tooltip-content">
+            <h4>Organization</h4>
+            <p id="org"></p>
+            <h4>Project Name</h4>
+            <p id="projectTip"></p> 
+            <h4>Funder</h4>
+            <p id="toolTipFunder"></p>
+            <h4>Amount Received</h4>
+            <p id="amt"></p>
+            <h4>Sector</h4>
+            <p id="toolTipSector"></p>
+            <h4>Participants</h4>
+            <p id="toolTipBenif"></p>
+          </div>
+        </div>
+         
+        
+        
+        <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+        <script src="bootstrap.js"></script>
+        <script src="semantic.min.js"></script>
+        <script src="script.js"></script>
+        
+    
+    </body>
+</html>
